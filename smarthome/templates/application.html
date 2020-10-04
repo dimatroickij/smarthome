@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    {% load static %}
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+          rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}"/>
+    <meta charset="UTF-8">
+
+    <script src="{% static 'js/applications.js' %}"></script>
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1"/>
+    <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+    <title>{% block title %}{% endblock %} </title>
+</head>
+<body style="min-height: 100vh; display: flex; flex-direction: column">
+<script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/serviceWorker.js', {
+            scope: '/'
+        });
+    }
+</script>
+<nav class="navbar navbar-expand-lg navbar-light bg-light" id="nav">
+    <a class="navbar-brand" href="/">Система управления умным домом</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+
+        <ul class="navbar-nav mr-auto">
+        </ul>
+        <ul class="navbar-nav">
+            <li class="nav-item">
+
+                <a class="nav-link" href="{% url 'login' %}">
+                    {% if request.user.is_authenticated %}
+                        {{ request.user.username }}
+                    {% else %}
+                        Вход
+                    {% endif %}
+                </a>
+            </li>
+            <li class="nav-item">
+                {% if request.user.is_authenticated %}
+                    <a class="nav-link" href="{% url 'logout' %}">Выйти</a>
+                {% endif %}
+            </li>
+        </ul>
+    </div>
+</nav>
+{% if messages %}
+    <div class="alert alert-light alert-dismissible fade show" role="alert">
+        <h4 class="alert-heading">Сообщения</h4>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        <ul class="list-group messages">
+            {% for message in messages %}
+                <li
+                        {% if message.tags %}
+                            class="list-group-item list-group-item-{{ message.tags }}" {% endif %}>{{ message|safe }}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+{% block content %}{% endblock %}
+</body>
+</html>
