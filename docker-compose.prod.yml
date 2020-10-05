@@ -3,7 +3,7 @@ services:
   web:
     image: "${WEB_IMAGE}"
     container_name: web
-    command: sh -c "python manage.py makemigrations; python manage.py migrate; python manage.py collectstatic --no-input --clear; gunicorn smarthome.wsgi:application --bind 0.0.0.0:8000"
+    command: sh -c "python manage.py makemigrations; python manage.py migrate; gunicorn smarthome.wsgi:application --bind 0.0.0.0:8000"
     volumes:
       - static_volume:/usr/src/app/static
       - media_volume:/usr/src/app/mediafiles
