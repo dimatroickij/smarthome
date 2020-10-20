@@ -18,13 +18,6 @@
     <title>{% block title %}{% endblock %} </title>
 </head>
 <body style="min-height: 100vh; display: flex; flex-direction: column">
-<script>
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/serviceWorker.js', {
-            scope: '/'
-        });
-    }
-</script>
 <nav class="navbar navbar-expand-lg navbar-light bg-light" id="nav">
     <a class="navbar-brand" href="/">Система управления умным домом</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
@@ -33,12 +26,10 @@
     </button>
 
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
-
         <ul class="navbar-nav mr-auto">
         </ul>
         <ul class="navbar-nav">
             <li class="nav-item">
-
                 <a class="nav-link" href="{% url 'login' %}">
                     {% if request.user.is_authenticated %}
                         {{ request.user.username }}
