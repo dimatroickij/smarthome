@@ -1,6 +1,9 @@
-from django.http import JsonResponse
 from django.shortcuts import render
 
-# Create your views here.
-def test(request):
-    return JsonResponse('test', safe=False)
+
+def home(request):
+    return render(request, 'home.html')
+
+
+def error_404(request, exception):
+    return render(request, 'error/error404.html', status=404)
