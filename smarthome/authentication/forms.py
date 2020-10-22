@@ -1,7 +1,8 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm, PasswordResetForm, PasswordChangeForm, \
-    SetPasswordForm
+    SetPasswordForm, UserChangeForm
+from django.forms import ModelForm
 
 
 class LoginForm(AuthenticationForm):
@@ -29,6 +30,17 @@ class MyUserCreationForm(UserCreationForm):
         model = get_user_model()
         fields = ('username', 'email', 'password1', 'password2',)
 
+class MyModelForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(ModelForm, self).__init__(*args, **kwargs)
+        self.fields['username'].widget = forms.TextInput(attrs={'class': 'form-control'})
+        self.fields['first_name'].widget = forms.TextInput(attrs={'class': 'form-control'})
+        self.fields['last_name'].widget = forms.TextInput(attrs={'class': 'form-control'})
+        self.fields['email'].widget = forms.EmailInput(attrs={'class': 'form-control'})
+
+    class Meta:
+        model = get_user_model()
+        fields = ('username', 'first_name', 'last_name', 'email')
 
 class MyPasswordResetForm(PasswordResetForm):
     def __init__(self, *args, **kwargs):

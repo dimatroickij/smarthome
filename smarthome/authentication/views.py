@@ -1,10 +1,11 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login, logout
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.utils.http import urlsafe_base64_decode
 
 from authentication.tokens import account_activation_token
-from authentication.forms import MyUserCreationForm
+from authentication.forms import MyUserCreationForm, MyModelForm
 
 
 def registration(request):
@@ -23,13 +24,30 @@ def registration(request):
     else:
         return redirect('portal:home')
 
+
+@login_required
+def editProfile(request):
+    if request.method == 'POST':
+        form = MyModelForm(request.POST, instance=request.user)
+        if form.is_valid():
+            user = form.save()
+            user.save()
+            messages.add_message(request, messages.SUCCESS, 'Вы успешно изменили учётные данные')
+            return redirect('portal:home')
+    else:
+        form = MyModelForm(instance=request.user)
+    return render(request, 'registration/editProfile.html', {'form': form})
+
+
 def passwordDone(request):
     messages.add_message(request, messages.SUCCESS, 'Ваш пароль успешно изменён')
     return redirect('portal:home')
 
+
 def resetDone(request):
     messages.add_message(request, messages.SUCCESS, 'Ваш пароль был сохранен. Теперь вы можете войти.')
     return redirect('portal:home')
+
 
 def activate(request, uidb64, token):
     try:

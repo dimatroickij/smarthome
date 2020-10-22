@@ -1,11 +1,26 @@
 {% extends 'application.html' %}
 {% block title %}Главная страница{% endblock %}
 {% block content %}
-<div class="fullscreen__container" style="flex: 1; display: flex; justify-content: center; align-items: center">
-    <div class="container">
-        <div class="jumbotron">
-            <h2 class="text-center mb-3">Главная страница</h2>
+    {% if not user.is_authenticated %}
+        <div class="fullscreen__container" style="flex: 1; display: flex; justify-content: center; align-items: center">
+            <div class="container">
+                <div class="jumbotron">
+                    <div class="jumbotron">
+                        <h1 class="display-4">Система управления умным домом</h1>
+                        <p class="lead">С помощью данного портала можно управлять умным домом, построенном на
+                            инфраструктуре Home Assistant.</p>
+                        <hr class="my-4">
+                        <p>Для использования портала надо пройти регистрацию и ввести URL и token вашей системы.</p>
+                        <a class="btn btn-primary btn-lg" href="https://www.home-assistant.io/" role="button">
+                            Узнать больше о Home Assistant
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
+    {% else %}
+        <div class="container">
+
+        </div>
+    {% endif %}
 {% endblock %}

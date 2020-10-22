@@ -1,17 +1,17 @@
 {% extends 'application.html' %}
-{% block title %}Вход в систему{% endblock %}
+{% block title %}Редактирование профиля{% endblock %}
 {% block content %}
     <div class="fullscreen__container" style="flex: 1; display: flex; justify-content: center; align-items: center">
         <div class="container">
             <div class="jumbotron">
-                <h2 class="text-center mb-3">Вход в систему</h2>
+                <h2 class="text-center">Редактирование профиля</h2>
                 <form method="post">
                     {% csrf_token %}
                     {% for field in form %}
                         <div class="form-group row">
                             <label for="{{ field.id_for_label }}"
-                                   class="col-sm-2 col-form-label">{{ field.label }}</label>
-                            <div class="col-sm-10">
+                                   class="col-sm-3 col-form-label">{{ field.label }}</label>
+                            <div class="col-sm-9">
                                 {{ field }}
                                 {% if field.help_text %}
                                     <small class="form-text text-muted">{{ field.help_text }}</small>
@@ -23,9 +23,10 @@
                         </div>
                     {% endfor %}
                     <div class="form-group">
-                        <label><a href="{% url 'password_reset' %}">Забыли пароль?</a></label>
+                        <label>Для смены пароля перейдите по <a
+                                href="{% url 'password_change' %}">ссылке</a></label>
                     </div>
-                    <button type="submit" class="btn btn-primary">Войти</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
                 </form>
             </div>
         </div>

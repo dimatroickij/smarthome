@@ -24,7 +24,8 @@ urlpatterns = [
     path('', include('portal.urls')),
     path('', include('authentication.urls')),
     path('accounts/login/', auth_views.LoginView.as_view(template_name='registration/login.html',
-                                                         authentication_form=LoginForm)),
+                                                         authentication_form=LoginForm,
+                                                         redirect_authenticated_user='/')),
     path('accounts/password_reset/', auth_views.PasswordResetView.as_view(
         form_class=MyPasswordResetForm, html_email_template_name='registration/password_reset_email.html')),
     path('accounts/reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(form_class=MySetPasswordForm)),
