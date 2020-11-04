@@ -8,7 +8,9 @@ class Smarthome(models.Model):
     unique_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     url = models.CharField('URL', max_length=255, unique=True)
     token = models.CharField('Token умного дома', max_length=255)
-    description = models.CharField('Описание умного дома', max_length=255, blank=True)
+    description = models.CharField('Описание умного дома', max_length=255, blank=True, null=True)
+    isDelete = models.BooleanField('Дом удалён', default=False)
+    isActive = models.BooleanField('Доступность умного дома (нужно для мониторинга)', default=True)
 
     def __str__(self):
         return self.url + ' - ' + self.token
@@ -26,9 +28,10 @@ class AccessSmarthome(models.Model):
     smarthome = models.ForeignKey(Smarthome, on_delete=models.CASCADE, verbose_name='ID умного дома')
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, verbose_name='Пользователь')
     owner = models.CharField('', max_length=5, choices=OWNER, null=True)
+    isDelete = models.BooleanField("Доступ удалён", default=False)
 
     def __str__(self):
-        return self.smarthome.description + ' - ' + self.user.username
+        return str(self.smarthome.description) + ' - ' + self.user.username
 
     class Meta:
         ordering = ['user']
@@ -46,6 +49,7 @@ class Device(models.Model):
     icon = models.CharField('Иконка', max_length=255, blank=True)
     unit_of_measurement = models.CharField('unit_of_measurement', max_length=255, blank=True)
     entity_id = models.CharField('entity_id', max_length=255, unique=True, blank=True)
+    isDelete = models.BooleanField('Устройство удалено', default=False)
 
     def __str__(self):
         return self.smarthome.url + ' - ' + self.user_id
