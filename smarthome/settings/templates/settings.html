@@ -1,0 +1,273 @@
+{% extends 'application.html' %}
+{% block title %}Настройка умного дома{% endblock %}
+{% block content %}
+    <script>
+        function editDescription(el, pk) {
+            $.ajax("{% url 'settings:checkAccess' %}", {
+                data: {'pk': pk},
+                statusCode: {
+                    200: function () {
+                        var textInput = $('#editDescription-' + pk.toString())
+                        var lastDescription = textInput.val()
+                        textInput.val('')
+                        $(el).removeAttr('onclick')
+                        $(el).on('click', function () {
+                            $(this).text('edit')
+                            $(el).attr('onclick', "editDescription(this, '" + pk.toString() + "')")
+                            textInput.val(lastDescription)
+                            textInput.prop('readonly', true)
+                        })
+                        $(el).text('close')
+                        textInput.removeAttr('readonly')
+                        textInput.keypress(function (event) {
+                            if (event.which === 13) {
+                                $.ajax("{% url 'settings:editDescription' %}", {
+                                    data: {'pk': pk, 'description': textInput.val()},
+                                    statusCode: {
+                                        200: function () {
+                                            $(el).text('edit')
+                                            $(el).attr('onclick', "editDescription(this, '" + pk.toString() + "')")
+                                            textInput.prop('readonly', true)
+                                        }
+                                    }
+                                })
+                            }
+                        })
+                    }
+                }
+            })
+        }
+
+        function showBlockAddUserSmarthome() {
+            $('#blockAddUserSmarthome').show();
+            $('#addUserSmarthome').hide();
+        }
+
+        function hideBlockAddUserSmarthome() {
+            $('#addUserSmarthome').show();
+            $('#blockAddUserSmarthome').hide()
+            $('#login').val('')
+            $('#login').addClass('is-invalid')
+        }
+
+        function addUserSmarthome(pk) {
+            var login = $('#login')
+            if (login.val() === '')
+                login.addClass('is-invalid')
+            else {
+                login.removeClass('is-invalid')
+                var access = $('#access').val()
+                $.get("{% url 'settings:addUserSmarthome' %}", {'pk': pk, 'user': login.val(), 'owner': access},
+                    function (code) {
+                        switch (code) {
+                            {#case '200':#}
+                            {#    hideBlockAddUserSmarthome()#}
+                            {#    break#}
+                            case '208':
+                                alert('Пользователь уже имеет доступ')
+                                break
+                            case '400':
+                                alert('Пользователя не существует')
+                                break
+                            case '403':
+                            case '404':
+                                alert('Нет доступа к добавлению пользователей в умный дом')
+                                break
+                            default:
+                                $('#addUserSmarthome').before(code)
+                                hideBlockAddUserSmarthome()
+                        }
+                    })
+            }
+        }
+
+        function editAccess(el, pk) {
+            var lastAccess = ($(el).parent()).find('p')
+            var lastAccessText = lastAccess.text()
+            lastAccess.html('<select class="form-control">' +
+                '<option value="owner">Владелец</option>' +
+                '<option value="guest">Гость</option>' +
+                '</select>')
+            var select = $(el).parent().find('select')
+            $(select).find("option:contains('" + lastAccessText + "')").attr('selected', 'selected')
+            $(el).removeAttr('onclick')
+            $(el).on('click', function () {
+                $.get("{% url 'settings:editAccessSmarthome' %}", {'pk': pk, 'access': $(select).val()}, function () {
+                    location.reload()
+                })
+            })
+        }
+
+        function deleteAccess(el, pk) {
+            $.ajax("{% url 'settings:deleteAccessSmarthome' %}", {
+                data: {'pk': pk},
+                statusCode: {
+                    200: function () {
+                        $(el).parent().parent().parent().remove()
+                    }
+                }
+            })
+        }
+    </script>
+    <div class="container-fluid mt-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Добавить умный дом</h5>
+                <p class="card-text">Для добавления необходимо ввести URL и токен</p>
+                <a class="card-link" data-toggle="collapse" href="#addSmarthome" role="button" aria-expanded="true"
+                   aria-controls="addSmarthome">Показать / скрыть</a>
+                <div class="card-text collapse show" id="addSmarthome">
+                    <form method="post" action="{% url 'settings:addSmarthome' %}">
+                        {% csrf_token %}
+                        {% for field in form %}
+                            <div class="form-group row">
+                                <label for="{{ field.id_for_label }}"
+                                       class="col-sm-2 col-form-label">{{ field.label }}</label>
+                                <div class="col-sm-10">
+                                    {{ field }}
+                                    {% if field.help_text %}
+                                        <small class="form-text text-muted">{{ field.help_text }}</small>
+                                    {% endif %}
+                                    {% for error in field.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                        <button type="submit" class="btn btn-primary">Добавить</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% if countMySmarthome != 0 %}
+            <p class="h3 text-center mt-3 mb-3">Доступные умные дома</p>
+        {% endif %}
+        {% for smarthome in mySmarthome %}
+            <div class="card">
+                <div class="card-header">
+                    <a href="{% url 'portal:viewSmarthome' '123' %}">Перейи на главную страницу умного дома</a>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"
+                            onclick="deleteAccess(this, '{{ access.pk }}')">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="form-group row">
+                        <label for="url" class="col-sm-2 col-form-label">URL</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" value="{{ smarthome.url }}" readonly>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="url" class="col-sm-2 col-form-label">Token</label>
+                        <div class="col-sm-10">
+                            <textarea class="form-control" rows="2" disabled
+                                      style="resize: none">{{ smarthome.token }}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="url" class="col-sm-2 col-form-label">Описание</label>
+                        <div class="input-group col-sm-10">
+                            <input type="text" class="form-control" readonly value="{{ smarthome.description }}"
+                                   id="editDescription-{{ smarthome.pk }}">
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary material-icons" type="button"
+                                        onclick="editDescription(this, '{{ smarthome.pk }}')"
+                                        {% if smarthome.access != 'owner' %}disabled{% endif %}>
+                                    edit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="h5 text-center mt-3 mb-3">Пользователи, имеющие доступ к умному дому</p>
+                    <div class="row row-cols-1 row-cols-md-4">
+                        {% for access in smarthome.usersWithAccess %}
+                            <div class="col mb-4">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        {% if smarthome.access == 'owner' and access.user != request.user %}
+                                            <button type="button" class="close" data-dismiss="alert" aria-label="Close"
+                                                    onclick="deleteAccess(this, '{{ access.pk }}')">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        {% endif %}
+                                        <h5 class="card-title">{{ access.user.username }}</h5>
+                                        <p class="card-text">{{ access.get_access_display }}</p>
+                                        {% if smarthome.access == 'owner' %}
+                                            <a href="#" class="card-link" onclick="editAccess(this, '{{ access.pk }}')">
+                                                Изменить уровень доступа</a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        {% if smarthome.access == 'owner' %}
+                            <div class="col mb-4" id="addUserSmarthome">
+                                <div class="card h-100 text-center" style="background-color:
+                            #007bff;cursor: pointer;color: white">
+                                    <div class="card-body" style="display: flex; align-items: center;
+                                justify-content: space-evenly" onclick="showBlockAddUserSmarthome()">
+                                        <i class="material-icons">add</i>Добавить пользователя в умный дом
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col mb-4" id="blockAddUserSmarthome" style="display: none">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="form-group row">
+                                            <label class="col-sm-4 col-form-label">Введите логин: </label>
+                                            <div class="col-sm-8">
+                                                <input type="text" id="login" class="form-control is-invalid">
+                                                <div class="invalid-feedback">
+                                                    Обязательное поле
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label class="col-sm-4 col-form-label">Тип доступа: </label>
+                                            <div class="col-sm-8">
+                                                <select class="form-control" id="access">
+                                                    <option value="owner">Владелец</option>
+                                                    <option value="guest" selected>Гость</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn btn-primary" onclick="addUserSmarthome(
+                                                '{{ smarthome.pk }}')">
+                                            Добавить
+                                        </button>
+                                        <button type="button" class="btn btn-primary"
+                                                onclick="hideBlockAddUserSmarthome()">Отменить
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        {% if countInvitations != 0 %}
+            <p class="h3 text-center mt-3 mb-3">Доступные приглашения</p>
+            <div class="row row-cols-1 row-cols-md-4">
+                {% for invitation in invitationsToSmarthome %}
+                    <div class="col mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ invitation.user.username }}</h5>
+                                <h6 class="card-subtitle mb-2 text-muted">{{ invitation.get_access_display }}</h6>
+                                <p class="card-text">{{ invitation.smarthome.description }}</p>
+                                <a href="{% url 'settings:approveInvitation' 1 %}?pk={{ invitation.pk }}"
+                                   class="card-link">Подтвердить</a>
+                                <a href="{% url 'settings:approveInvitation' 0 %}?pk={{ invitation.pk }}"
+                                   class="card-link">Отклонить</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+    </div>
+{% endblock %}

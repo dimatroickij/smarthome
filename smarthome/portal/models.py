@@ -8,7 +8,7 @@ class Smarthome(models.Model):
     unique_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     url = models.CharField('URL', max_length=255, unique=True)
     token = models.CharField('Token умного дома', max_length=255)
-    description = models.CharField('Описание умного дома', max_length=255, blank=True, null=True)
+    description = models.CharField('Описание умного дома', max_length=255, blank=True, default='')
     isDelete = models.BooleanField('Дом удалён', default=False)
     isActive = models.BooleanField('Доступность умного дома (нужно для мониторинга)', default=True)
 
@@ -22,13 +22,13 @@ class Smarthome(models.Model):
 
 
 class AccessSmarthome(models.Model):
-    OWNER = (('guest', 'Гость'),
-             ('owner', 'Владелец'))
+    ACCESS = (('guest', 'Гость'),
+              ('owner', 'Владелец'))
     unique_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     smarthome = models.ForeignKey(Smarthome, on_delete=models.CASCADE, verbose_name='ID умного дома')
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, verbose_name='Пользователь')
-    owner = models.CharField('', max_length=5, choices=OWNER, null=True)
-    isDelete = models.BooleanField("Доступ удалён", default=False)
+    access = models.CharField('', max_length=5, choices=ACCESS, null=True)
+    isConfirmed = models.BooleanField('Пользователь подтвердил запрос', default=False)
 
     def __str__(self):
         return str(self.smarthome.description) + ' - ' + self.user.username

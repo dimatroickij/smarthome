@@ -22,6 +22,7 @@ from authentication.forms import LoginForm, MyPasswordResetForm, MyPasswordChang
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('portal.urls')),
+    path('settings/', include('settings.urls')),
     path('', include('authentication.urls')),
     path('accounts/login/', auth_views.LoginView.as_view(template_name='registration/login.html',
                                                          authentication_form=LoginForm,
