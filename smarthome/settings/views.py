@@ -39,7 +39,7 @@ def addSmarthome(request):
         if form.is_valid():
             site = urlparse(form.cleaned_data['url'])
             if site.scheme is None:
-                messages.add_message(request, messages.ERROR, 'Введён неправильный URL')
+                form.add_error('url', ValidationError('Введён неправильный URL'))
             else:
                 try:
                     headers = {'Authorization': "Bearer %s" % form.cleaned_data['token']}
@@ -50,10 +50,13 @@ def addSmarthome(request):
                         messages.add_message(request, messages.SUCCESS, 'Вы успешно добавили умный дом')
                         return redirect('portal:home')
                     elif query.status_code == '522':
-                        messages.add_message(request, messages.ERROR, 'Сайт временно не доступен')
+                        form.add_error('url', ValidationError('Сайт временно не доступен'))
                 except:
-                    messages.add_message(request, messages.ERROR, 'Введённого URL не существует')
-        return render(request, 'settings.html', {'form': form})
+                    form.add_error('url', ValidationError('Введённого URL не существует'))
+        countMySmarthome = len(AccessSmarthome.objects.filter(user=request.user, isConfirmed=True))
+        invitationsToSmarthome = len(AccessSmarthome.objects.filter(user=request.user, isConfirmed=False))
+        return render(request, 'settings.html', {'form': form, 'countMySmarthome': countMySmarthome,
+                                                 'countInvitations': invitationsToSmarthome})
 
 
 @login_required
@@ -118,6 +121,9 @@ def addUserSmarthome(request):
                                         <a href="#" class="card-link" onclick="editAccess(this, '%s')">Изменить
                                                 уровень доступа</a>
                                     </div>
+                                    <div class="updateTrack">
+                                        Приглашение отправлено
+                                    </div>
                                 </div>
                             </div>""" % (newAccessUserSmarthome.pk, newAccessUserSmarthome.user.username,
                                          newAccessUserSmarthome.get_access_display(), newAccessUserSmarthome.pk)
@@ -134,7 +140,7 @@ def editAccessSmarthome(request):
     access = AccessSmarthome.objects.filter(pk=request.GET['pk'], isConfirmed=True)
     if access.exists():
         if AccessSmarthome.objects.filter(smarthome=access[0].smarthome, user=request.user, access='owner',
-                                          isConfirmed=True).exists():
+                                          isConfirmed=True).exists() and access[0].user != request.user:
             editAccess = access[0]
             editAccess.access = request.GET['access']
             editAccess.save()
@@ -148,9 +154,21 @@ def deleteAccessSmarthome(request):
     access = AccessSmarthome.objects.filter(pk=request.GET['pk'], isConfirmed=True)
     if access.exists():
         if AccessSmarthome.objects.filter(smarthome=access[0].smarthome, user=request.user, access='owner',
-                                          isConfirmed=True).exists():
+                                          isConfirmed=True).exists() and access[0].user != request.user:
             deleteAccess = access[0]
             deleteAccess.delete()
+            return HttpResponse(status=200)
+        return HttpResponse(status=403)
+    return HttpResponse(status=404)
+
+
+@login_required
+def deleteSmarthome(request):
+    smarthome = AccessSmarthome.objects.filter(pk=request.GET['pk'], isConfirmed=True)
+    pkSmarthome = smarthome[0].smarthome.pk
+    if smarthome.exists():
+        if smarthome[0].user == request.user and smarthome[0].access == 'owner':
+            Smarthome.objects.get(pk=pkSmarthome).delete()
             return HttpResponse(status=200)
         return HttpResponse(status=403)
     return HttpResponse(status=404)

@@ -20,6 +20,7 @@ from django.contrib.auth import views as auth_views
 from authentication.forms import LoginForm, MyPasswordResetForm, MyPasswordChangeForm, MySetPasswordForm
 
 urlpatterns = [
+    path('admin/doc/', include('django.contrib.admindocs.urls')),
     path('admin/', admin.site.urls),
     path('', include('portal.urls')),
     path('settings/', include('settings.urls')),

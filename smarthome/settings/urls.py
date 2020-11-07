@@ -13,5 +13,6 @@ urlpatterns = [
     path('addUserSmarthome', views.addUserSmarthome, name='addUserSmarthome'),
     path('editAccessSmarthome', views.editAccessSmarthome, name='editAccessSmarthome'),
     path('deleteAccessSmarthome', views.deleteAccessSmarthome, name='deleteAccessSmarthome'),
+    path('deleteSmarthome', views.deleteSmarthome, name='deleteSmarthome'),
     path('approveInvitation/<int:response>', views.approveInvitation, name='approveInvitation')
 ]

@@ -9,7 +9,6 @@ class Smarthome(models.Model):
     url = models.CharField('URL', max_length=255, unique=True)
     token = models.CharField('Token умного дома', max_length=255)
     description = models.CharField('Описание умного дома', max_length=255, blank=True, default='')
-    isDelete = models.BooleanField('Дом удалён', default=False)
     isActive = models.BooleanField('Доступность умного дома (нужно для мониторинга)', default=True)
 
     def __str__(self):

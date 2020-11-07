@@ -1,6 +1,20 @@
 {% extends 'application.html' %}
 {% block title %}Настройка умного дома{% endblock %}
 {% block content %}
+    <style>
+        .updateTrack {
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+            background-color: rgba(0, 123, 255, 0.4);
+            color: white;
+        }
+    </style>
     <script>
         function editDescription(el, pk) {
             $.ajax("{% url 'settings:checkAccess' %}", {
@@ -84,18 +98,36 @@
         function editAccess(el, pk) {
             var lastAccess = ($(el).parent()).find('p')
             var lastAccessText = lastAccess.text()
-            lastAccess.html('<select class="form-control">' +
-                '<option value="owner">Владелец</option>' +
-                '<option value="guest">Гость</option>' +
-                '</select>')
-            var select = $(el).parent().find('select')
+            var inputGroup = $('<div>', {'class': 'input-group'})
+            var select = $('<select>', {'class': 'custom-select'})
+            var ownerOption = $('<option>', {'value': 'owner', 'text': 'Владелец'})
+            var guestOption = $('<option>', {'value': 'guest', 'text': 'Гость'})
+            select.append(ownerOption)
+            select.append(guestOption)
+            var send = $('<button>', {
+                'class': 'btn btn-outline-secondary material-icons', 'type': 'button', 'text': 'send'
+            })
+            send.on('click', function () {
+                    var select = $(this).parent().parent().find('select')
+                    $.get("{% url 'settings:editAccessSmarthome' %}", {'pk': pk, 'access': $(select).val()}, function () {
+                        location.reload()
+                    })
+                }
+            )
+            var clear = $('<button>', {
+                'class': 'btn btn-outline-secondary material-icons', 'type': 'button',
+                'text': 'clear'
+            })
+            clear.on('click', function () {
+                $(this).parent().parent().text(lastAccessText)
+                $(el).attr('onclick', "editAccess(this, '" + pk.toString() + "')")
+            })
+            var append = $('<div>', {'class': 'input-group-append'})
+            append.append(send)
+            append.append(clear)
+            lastAccess.text('').append(inputGroup.append(select).append(append))
             $(select).find("option:contains('" + lastAccessText + "')").attr('selected', 'selected')
             $(el).removeAttr('onclick')
-            $(el).on('click', function () {
-                $.get("{% url 'settings:editAccessSmarthome' %}", {'pk': pk, 'access': $(select).val()}, function () {
-                    location.reload()
-                })
-            })
         }
 
         function deleteAccess(el, pk) {
@@ -104,6 +136,17 @@
                 statusCode: {
                     200: function () {
                         $(el).parent().parent().parent().remove()
+                    }
+                }
+            })
+        }
+
+        function deleteSmarthome(pk) {
+            $.ajax("{% url 'settings:deleteSmarthome' %}", {
+                data: {'pk': pk},
+                statusCode: {
+                    200: function () {
+                        location.reload()
                     }
                 }
             })
@@ -145,11 +188,13 @@
         {% for smarthome in mySmarthome %}
             <div class="card">
                 <div class="card-header">
-                    <a href="{% url 'portal:viewSmarthome' '123' %}">Перейи на главную страницу умного дома</a>
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"
-                            onclick="deleteAccess(this, '{{ access.pk }}')">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <a href="{% url 'portal:viewSmarthome' smarthome.pk %}">Перейти на главную страницу умного дома</a>
+                    {% if smarthome.access == 'owner' %}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close"
+                                onclick="deleteSmarthome('{{ smarthome.pk }}')">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    {% endif %}
                 </div>
                 <div class="card-body">
                     <div class="form-group row">
@@ -194,11 +239,16 @@
                                         {% endif %}
                                         <h5 class="card-title">{{ access.user.username }}</h5>
                                         <p class="card-text">{{ access.get_access_display }}</p>
-                                        {% if smarthome.access == 'owner' %}
+                                        {% if smarthome.access == 'owner' and access.user != request.user %}
                                             <a href="#" class="card-link" onclick="editAccess(this, '{{ access.pk }}')">
                                                 Изменить уровень доступа</a>
                                         {% endif %}
                                     </div>
+                                    {% if access.isConfirmed == False %}
+                                        <div class="updateTrack">
+                                            Приглашение отправлено
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         {% endfor %}

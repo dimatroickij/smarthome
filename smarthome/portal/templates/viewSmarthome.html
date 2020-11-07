@@ -1,0 +1,47 @@
+{% extends 'application.html' %}
+{% block title %}Умный дом{% endblock %}
+{% block content %}
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card mb-4">
+                    <div class="card-header" style="background-color: #007bff; color: white">Сенсоры</div>
+                    <div class="card-body">
+
+                        <div class="card-columns">
+                            {% for sensor in sensors %}
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <p class="card-text"
+                                           style="font-size: 20px;">
+                                            {% if sensor.attributes.device_class == 'door' %}
+                                                <i class="material-icons">
+                                                    {% if sensor.state == 'off' %}
+                                                        no_meeting_room
+                                                    {% else %}
+                                                        meeting_room
+                                                    {% endif %}
+                                                </i>
+                                            {% elif sensor.attributes.device_class == 'motion' %}
+                                                <i class="material-icons"> directions_walk </i>
+                                            {% else %}
+                                                {{ sensor.state|default:'&nbsp' }}
+                                                {{ sensor.attributes.unit_of_measurement|default:'&nbsp' }}
+                                            {% endif %}
+                                        </p>
+                                        <p class="card-text"><small class="text-muted">
+                                            {{ sensor.attributes.friendly_name }}
+                                        </small>
+                                        </p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% include "block.html" with domain='light' name='Освещение' devices=lights flash='wb_incandescent' toogle_block=groups.light_state count_all=groups.light_len %}
+            {% include "block.html" with domain='switch' name='Выключатели' devices=switches flash='flash_on' toogle_block=groups.switch_state count_all=groups.switch_len %}
+        </div>
+    </div>
+{% endblock %}
