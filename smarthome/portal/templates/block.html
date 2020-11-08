@@ -4,13 +4,14 @@
             entity_id="{{ domain }}.all" count_all="{{ count_all }}">
             {{ name }}
             <span class="badge badge-pill">
-                <i class="material-icons toggle" style="cursor: pointer" onclick="selector('{{ domain }}.all')">
+                <i class="material-icons toggle" style="cursor: pointer"
+                   onclick="selector('{{ domain }}.all', '{{ pk }}')">
                     {{ toogle_block }}
                 </i>
             </span>
         </li>
         {% for device in devices %}
-            <li class="list-group-item d-flex justify-content-between align-items-center {{ domain }}"
+            <li class="list-group-item d-flex justify-content-between align-items-center block {{ domain }}"
                 entity_id="{{ device.entity_id }}">
                 <span class="badge badge-pill">
                     {% if device.state == 'on' %}
@@ -19,10 +20,12 @@
                         <i class="material-icons flash"> {{ flash }} </i>
                     {% endif %}
                 </span>
-                <span style="font-size: 22px">{{ device.attributes.friendly_name }}</span>
+                <span style="font-size: 22px; cursor: pointer" onclick="infoDevice('{{ device.entity_id }}')">
+                    {{ device.friendly_name }}
+                </span>
                 <span class="badge badge-pill">
                     <i class="material-icons toggle" style="cursor: pointer"
-                       onclick="selector('{{ device.entity_id }}')">
+                       onclick="selector('{{ device.entity_id }}', '{{ pk }}')">
                         {% if device.state == 'on' %}
                             toggle_on
                         {% else %}

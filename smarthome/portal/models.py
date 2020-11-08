@@ -12,7 +12,7 @@ class Smarthome(models.Model):
     isActive = models.BooleanField('Доступность умного дома (нужно для мониторинга)', default=True)
 
     def __str__(self):
-        return self.url + ' - ' + self.token
+        return self.url
 
     class Meta:
         ordering = ['url']
@@ -30,7 +30,7 @@ class AccessSmarthome(models.Model):
     isConfirmed = models.BooleanField('Пользователь подтвердил запрос', default=False)
 
     def __str__(self):
-        return str(self.smarthome.description) + ' - ' + self.user.username
+        return self.smarthome.url + ' - ' + self.user.username
 
     class Meta:
         ordering = ['user']
@@ -42,18 +42,33 @@ class AccessSmarthome(models.Model):
 class Device(models.Model):
     unique_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     smarthome = models.ForeignKey(Smarthome, on_delete=models.CASCADE, verbose_name='ID умного дома')
-    user_id = models.CharField('user_id', max_length=255, unique=True, blank=True)
-    device_class = models.CharField('Класс устройства', max_length=255)
-    friendly_name = models.CharField('friendly_name', max_length=255, blank=False)
-    icon = models.CharField('Иконка', max_length=255, blank=True)
-    unit_of_measurement = models.CharField('unit_of_measurement', max_length=255, blank=True)
-    entity_id = models.CharField('entity_id', max_length=255, unique=True, blank=True)
-    isDelete = models.BooleanField('Устройство удалено', default=False)
+    entity_id = models.CharField('ID для изменения состояния устройства', max_length=255, unique=True)
+    device_class = models.CharField('Класс устройства', max_length=255, blank=False, null=True)
+    friendly_name = models.CharField('Название из HomeAssistant', max_length=255)
+    name = models.CharField('Введённоё название устройства', max_length=255)
+    icon = models.CharField('Иконка для сенсоров', max_length=255, blank=True, null=True)
+    unit_of_measurement = models.CharField('Единица измерения', max_length=255, blank=True, null=True)
 
     def __str__(self):
-        return self.smarthome.url + ' - ' + self.user_id
+        return self.smarthome.url + ' - ' + self.entity_id
 
     class Meta:
-        ordering = ['user_id']
         verbose_name = 'устройство'
         verbose_name_plural = 'Устройства'
+
+
+class DeviceStates(models.Model):
+    unique_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    device = models.ForeignKey(Device, on_delete=models.CASCADE, verbose_name='Устройство')
+    state = models.CharField('Состояние устройства', max_length=255)
+    last_changed = models.DateTimeField('Последнее изменение состояния')
+    last_updated = models.DateTimeField('Последнее обновление')
+
+    def __str__(self):
+        return self.device.friendly_name + ' - ' + self.state
+
+    class Meta:
+        ordering = ['-last_updated']
+        verbose_name = 'состояние устройства'
+        verbose_name_plural = 'Состояния устройств'
+        unique_together = [['device', 'state', 'last_changed', 'last_updated']]

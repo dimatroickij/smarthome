@@ -1,38 +1,109 @@
 {% extends 'application.html' %}
 {% block title %}Умный дом{% endblock %}
 {% block content %}
+    <script>
+        var table = {
+            "toggle_on": ["toggle_off", "turn_off", "black"],
+            "toggle_off": ["toggle_on", "turn_on", "rgb(253, 216, 53)"]
+        };
+
+        function all_toggles(domain) {
+            var count_all = Number($('li[entity_id="' + domain + '.all"]').attr('count_all'));
+            var count = $('.' + domain + ':contains("toggle_on")').length;
+            if (count === count_all)
+                $('li[entity_id="' + domain + '.all"] .toggle').text('toggle_on');
+            else
+                $('li[entity_id="' + domain + '.all"] .toggle').text('toggle_off');
+        }
+
+        function selector(entity_id, pk) {
+            var toggle = $('li[entity_id="' + entity_id + '"] .toggle');
+            var state = toggle.text().trim();
+
+            if (entity_id.split('.')[1] !== 'all') {
+                setToggle(entity_id, state, pk);
+            } else {
+                list = $('.' + entity_id.split('.')[0]);
+                $.each(list, function (item, value) {
+                    setToggle($(value).attr('entity_id'), state, pk)
+                });
+                toggle.text(table[state][0]);
+            }
+        }
+
+        function setToggle(entity_id, state, pk) {
+            var toggle = $('li[entity_id="' + entity_id + '"] .toggle');
+            if (entity_id.split('.')[0] !== 'all') {
+                var flash = $('li[entity_id="' + entity_id + '"] .flash');
+                $.ajax("{% url 'portal:selector' %}", {
+                    type: 'POST',
+                    data: {
+                        'domain': entity_id.split('.')[0],
+                        'entity_id': entity_id,
+                        'service': table[state][1],
+                        'pk': pk
+                    },
+                    statusCode: {
+                        200: function () {
+                            toggle.text(table[state][0]);
+                            flash.css('color', table[state][2]);
+                            all_toggles(entity_id.split('.')[0])
+                        },
+                        403: function () {
+                            alert('Нет доступа к изменению состояний устройства')
+                        },
+                        404: function () {
+                            alert('Устройство не найдено')
+                        },
+                        503: function () {
+                            alert('Умный дом недоступен. Попробуйте ещё раз')
+                        }
+                    }
+                })
+            }
+        }
+    </script>
+    <style>
+        .block:focus, .block:hover {
+            z-index: 1;
+            color: #495057;
+            text-decoration: none;
+            background-color: #f8f9fa;
+        }
+    </style>
     <div class="container mt-4">
         <div class="row">
             <div class="col-12">
                 <div class="card mb-4">
                     <div class="card-header" style="background-color: #007bff; color: white">Сенсоры</div>
                     <div class="card-body">
-
-                        <div class="card-columns">
+                        <div class="row row-cols-2 row-cols-sm-2 row-cols-md-3 row-cols-lg-5">
                             {% for sensor in sensors %}
-                                <div class="card">
-                                    <div class="card-body text-center">
-                                        <p class="card-text"
-                                           style="font-size: 20px;">
-                                            {% if sensor.attributes.device_class == 'door' %}
-                                                <i class="material-icons">
-                                                    {% if sensor.state == 'off' %}
-                                                        no_meeting_room
-                                                    {% else %}
-                                                        meeting_room
-                                                    {% endif %}
-                                                </i>
-                                            {% elif sensor.attributes.device_class == 'motion' %}
-                                                <i class="material-icons"> directions_walk </i>
-                                            {% else %}
-                                                {{ sensor.state|default:'&nbsp' }}
-                                                {{ sensor.attributes.unit_of_measurement|default:'&nbsp' }}
-                                            {% endif %}
-                                        </p>
-                                        <p class="card-text"><small class="text-muted">
-                                            {{ sensor.attributes.friendly_name }}
-                                        </small>
-                                        </p>
+                                <div class="col mb-4">
+                                    <div class="card block">
+                                        <div class="card-body text-center" style="cursor: pointer"
+                                             onclick="infoDevices('{{ sensor.entity_id }}')">
+                                            <p class="card-text" style="font-size: 20px;">
+                                                {% if sensor.device_class == 'door' %}
+                                                    <i class="material-icons">
+                                                        {% if sensor.state == 'off' %}
+                                                            no_meeting_room
+                                                        {% else %}
+                                                            meeting_room
+                                                        {% endif %}
+                                                    </i>
+                                                {% elif sensor.device_class == 'motion' %}
+                                                    <i class="material-icons"> directions_walk </i>
+                                                {% else %}
+                                                    {{ sensor.state|default:'&nbsp' }}
+                                                    {{ sensor.unit_of_measurement|default:'&nbsp' }}
+                                                {% endif %}
+                                            </p>
+                                            <p class="card-text"><small class="text-muted">
+                                                {{ sensor.friendly_name }}
+                                            </small>
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             {% endfor %}

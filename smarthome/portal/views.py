@@ -1,7 +1,13 @@
+import json
+
 import requests
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
-from portal.models import AccessSmarthome
+from django.views.decorators.csrf import csrf_exempt
+
+from portal.models import AccessSmarthome, Device, DeviceStates
 
 
 def home(request):
@@ -30,6 +36,33 @@ def home(request):
     return render(request, 'home.html')
 
 
+def getListId(x):
+    try:
+        device_class = x['attributes']['device_class']
+    except:
+        device_class = None
+    try:
+        icon = x['attributes']['icon']
+    except:
+        icon = None
+    try:
+        unit_of_measurement = x['attributes']['unit_of_measurement']
+    except:
+        unit_of_measurement = None
+
+    return {'entity_id': x['entity_id'], 'device_class': device_class,
+            'icon': icon,
+            'friendly_name': x['attributes']['friendly_name'],
+            'unit_of_measurement': unit_of_measurement, 'state': {
+            'state': x['state'], 'last_changed': x['last_changed'],
+            'last_updated': x['last_updated']}}
+
+
+def addState(x):
+    x.state = DeviceStates.objects.filter(device_id=x.pk)[0]
+
+
+@login_required
 def viewSmarthome(request, pk):
     """
     :param request: Запрос от пользователя
@@ -52,26 +85,53 @@ def viewSmarthome(request, pk):
     if access.exists():
         if access[0].user == request.user:
             headers = {'Authorization': "Bearer %s" % access[0].smarthome.token}
-            devices = [{}]
             sensors = []
             lights = []
             switches = []
             groups = {'switch': 0, 'light': 0}
             state = {'off': 0, 'on': 1}
             try:
-                devices = requests.get(access[0].smarthome.url + '/api/states', headers=headers).json()
+                responseDevice = requests.get(access[0].smarthome.url + '/api/states', headers=headers).json()
+                devices = list(map(getListId, filter(lambda x: 'friendly_name' in list(x['attributes'].keys()),
+                                                     responseDevice)))
+                for device in devices:
+                    pkDevice = ''
+                    if Device.objects.filter(entity_id=device['entity_id']).exists():
+                        oldDevice = Device.objects.get(entity_id=device['entity_id'])
+                        oldDevice.friendly_name = device['friendly_name']
+                        oldDevice.save()
+                        pkDevice = oldDevice.pk
+                    else:
+                        newDevice = Device(smarthome=access[0].smarthome, entity_id=device['entity_id'],
+                                           device_class=device['device_class'], friendly_name=device['friendly_name'],
+                                           name=device['friendly_name'], icon=device['icon'],
+                                           unit_of_measurement=device['unit_of_measurement'])
+                        newDevice.save()
+                        pkDevice = newDevice.pk
+                    newDeviceStates = DeviceStates(device_id=pkDevice, state=device['state']['state'],
+                                                   last_changed=device['state']['last_changed'],
+                                                   last_updated=device['state']['last_updated'])
+                    try:
+                        newDeviceStates.full_clean()
+                        newDeviceStates.save()
+                    except ValidationError:
+                        pass
             except:
-                pass  # TODO Добавить получение старых данных, если дом недоступен
+                pass
+
+            devices = Device.objects.filter(smarthome=access[0].smarthome).order_by('friendly_name')
             for device in devices:
-                # TODO Добавить обработку полученных устройств для сохранения или обновления их данных в БД портала
-                if device['entity_id'].split('.')[0] == 'sensor':
+                stateRecord = DeviceStates.objects.filter(device=device)[0]
+                device.state = stateRecord.state
+                if device.entity_id.split('.')[0] in ['sensor', 'binary_sensor']:
                     sensors.append(device)
-                if device['entity_id'].split('.')[0] == 'light':
+                if device.entity_id.split('.')[0] == 'light':
                     lights.append(device)
-                    groups[device['entity_id'].split('.')[0]] += state[device['state']]
-                if device['entity_id'].split('.')[0] == 'switch':
+                    groups[device.entity_id.split('.')[0]] += state[device.state]
+                if device.entity_id.split('.')[0] == 'switch':
                     switches.append(device)
-                    groups[device['entity_id'].split('.')[0]] += state[device['state']]
+                    groups[device.entity_id.split('.')[0]] += state[device.state]
+
             if groups['switch'] != len(switches):
                 groups['switch_state'] = 'toggle_off'
             else:
@@ -85,7 +145,22 @@ def viewSmarthome(request, pk):
             groups['light_len'] = len(lights)
             groups['switch_len'] = len(switches)
             return render(request, 'viewSmarthome.html', {'sensors': sensors, 'lights': lights, 'switches': switches,
-                                                          'groups': groups})
+                                                          'groups': groups, 'pk': access[0].pk})
+        return HttpResponse(status=403)
+    return HttpResponse(status=404)
+
+
+@login_required
+@csrf_exempt
+def selector(request):
+    access = AccessSmarthome.objects.filter(pk=request.POST['pk'], isConfirmed=True)
+    if access.exists():
+        if access[0].user == request.user and access[0].access != 'guest':
+            url = "%s/api/services/%s/%s" % (access[0].smarthome.url, request.POST['domain'], request.POST['service'])
+            headers = {'Authorization': "Bearer %s" % access[0].smarthome.token}
+            data = json.dumps({"entity_id": request.POST['entity_id']})
+            response = requests.post(url, headers=headers, data=data)
+            return HttpResponse(response.status_code)
         return HttpResponse(status=403)
     return HttpResponse(status=404)
 
