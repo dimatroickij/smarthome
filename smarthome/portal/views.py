@@ -121,16 +121,19 @@ def viewSmarthome(request, pk):
 
             devices = Device.objects.filter(smarthome=access[0].smarthome).order_by('friendly_name')
             for device in devices:
-                stateRecord = DeviceStates.objects.filter(device=device)[0]
-                device.state = stateRecord.state
-                if device.entity_id.split('.')[0] in ['sensor', 'binary_sensor']:
-                    sensors.append(device)
-                if device.entity_id.split('.')[0] == 'light':
-                    lights.append(device)
-                    groups[device.entity_id.split('.')[0]] += state[device.state]
-                if device.entity_id.split('.')[0] == 'switch':
-                    switches.append(device)
-                    groups[device.entity_id.split('.')[0]] += state[device.state]
+                try:
+                    stateRecord = DeviceStates.objects.filter(device=device)[0]
+                    device.state = stateRecord.state
+                    if device.entity_id.split('.')[0] in ['sensor', 'binary_sensor']:
+                        sensors.append(device)
+                    if device.entity_id.split('.')[0] == 'light':
+                        lights.append(device)
+                        groups[device.entity_id.split('.')[0]] += state[device.state]
+                    if device.entity_id.split('.')[0] == 'switch':
+                        switches.append(device)
+                        groups[device.entity_id.split('.')[0]] += state[device.state]
+                except IndexError:
+                    pass
 
             if groups['switch'] != len(switches):
                 groups['switch_state'] = 'toggle_off'

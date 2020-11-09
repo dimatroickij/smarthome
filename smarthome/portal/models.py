@@ -60,7 +60,7 @@ class Device(models.Model):
 class DeviceStates(models.Model):
     unique_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     device = models.ForeignKey(Device, on_delete=models.CASCADE, verbose_name='Устройство')
-    state = models.CharField('Состояние устройства', max_length=255)
+    state = models.CharField('Состояние устройства', max_length=255, blank=True)
     last_changed = models.DateTimeField('Последнее изменение состояния')
     last_updated = models.DateTimeField('Последнее обновление')
 
