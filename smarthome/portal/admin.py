@@ -15,7 +15,8 @@ class AccessSmarthome(admin.ModelAdmin):
 
 @admin.register(Device)
 class DeviceAdmin(admin.ModelAdmin):
-    list_display = ('smarthome', 'entity_id', 'name', 'friendly_name', 'device_class', 'icon', 'unit_of_measurement')
+    list_display = ('smarthome', 'domain', 'codeDevice', 'name', 'friendly_name', 'device_class', 'icon',
+                    'unit_of_measurement')
     list_filter = ['smarthome']
 
 

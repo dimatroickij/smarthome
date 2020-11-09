@@ -50,9 +50,8 @@ def getListId(x):
     except:
         unit_of_measurement = None
 
-    return {'entity_id': x['entity_id'], 'device_class': device_class,
-            'icon': icon,
-            'friendly_name': x['attributes']['friendly_name'],
+    return {'domain': x['entity_id'].split('.')[0], 'codeDevice': x['entity_id'].split('.')[1],
+            'device_class': device_class, 'icon': icon, 'friendly_name': x['attributes']['friendly_name'],
             'unit_of_measurement': unit_of_measurement, 'state': {
             'state': x['state'], 'last_changed': x['last_changed'],
             'last_updated': x['last_updated']}}
@@ -96,16 +95,16 @@ def viewSmarthome(request, pk):
                                                      responseDevice)))
                 for device in devices:
                     pkDevice = ''
-                    if Device.objects.filter(entity_id=device['entity_id']).exists():
-                        oldDevice = Device.objects.get(entity_id=device['entity_id'])
+                    if Device.objects.filter(domain=device['domain'], codeDevice=device['codeDevice']).exists():
+                        oldDevice = Device.objects.get(domain=device['domain'], codeDevice=device['codeDevice'])
                         oldDevice.friendly_name = device['friendly_name']
                         oldDevice.save()
                         pkDevice = oldDevice.pk
                     else:
-                        newDevice = Device(smarthome=access[0].smarthome, entity_id=device['entity_id'],
-                                           device_class=device['device_class'], friendly_name=device['friendly_name'],
-                                           name=device['friendly_name'], icon=device['icon'],
-                                           unit_of_measurement=device['unit_of_measurement'])
+                        newDevice = Device(smarthome=access[0].smarthome, domain=device['domain'].split('.')[0],
+                                           codeDevice=device['codeDevice'], device_class=device['device_class'],
+                                           friendly_name=device['friendly_name'], name=device['friendly_name'],
+                                           icon=device['icon'], unit_of_measurement=device['unit_of_measurement'])
                         newDevice.save()
                         pkDevice = newDevice.pk
                     newDeviceStates = DeviceStates(device_id=pkDevice, state=device['state']['state'],
@@ -124,14 +123,14 @@ def viewSmarthome(request, pk):
                 try:
                     stateRecord = DeviceStates.objects.filter(device=device)[0]
                     device.state = stateRecord.state
-                    if device.entity_id.split('.')[0] in ['sensor', 'binary_sensor']:
+                    if device.domain in ['sensor', 'binary_sensor']:
                         sensors.append(device)
-                    if device.entity_id.split('.')[0] == 'light':
+                    if device.domain == 'light':
                         lights.append(device)
-                        groups[device.entity_id.split('.')[0]] += state[device.state]
-                    if device.entity_id.split('.')[0] == 'switch':
+                        groups[device.domain] += state[device.state]
+                    if device.domain == 'switch':
                         switches.append(device)
-                        groups[device.entity_id.split('.')[0]] += state[device.state]
+                        groups[device.domain] += state[device.state]
                 except IndexError:
                     pass
 
@@ -162,7 +161,10 @@ def selector(request):
             url = "%s/api/services/%s/%s" % (access[0].smarthome.url, request.POST['domain'], request.POST['service'])
             headers = {'Authorization': "Bearer %s" % access[0].smarthome.token}
             data = json.dumps({"entity_id": request.POST['entity_id']})
-            response = requests.post(url, headers=headers, data=data)
+            try:
+                response = requests.post(url, headers=headers, data=data)
+            except:
+                return HttpResponse(status=503)
             return HttpResponse(response.status_code)
         return HttpResponse(status=403)
     return HttpResponse(status=404)

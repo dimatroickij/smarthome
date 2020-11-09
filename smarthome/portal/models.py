@@ -42,7 +42,8 @@ class AccessSmarthome(models.Model):
 class Device(models.Model):
     unique_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     smarthome = models.ForeignKey(Smarthome, on_delete=models.CASCADE, verbose_name='ID умного дома')
-    entity_id = models.CharField('ID для изменения состояния устройства', max_length=255, unique=True)
+    codeDevice = models.CharField('2 часть entity_id', max_length=255)
+    domain = models.CharField('Domain (1 часть entity_id)', max_length=255)
     device_class = models.CharField('Класс устройства', max_length=255, blank=False, null=True)
     friendly_name = models.CharField('Название из HomeAssistant', max_length=255)
     name = models.CharField('Введённоё название устройства', max_length=255)
@@ -50,11 +51,15 @@ class Device(models.Model):
     unit_of_measurement = models.CharField('Единица измерения', max_length=255, blank=True, null=True)
 
     def __str__(self):
-        return self.smarthome.url + ' - ' + self.entity_id
+        return self.smarthome.url + ' - ' + self.codeDevice
+
+    def getEntityId(self):
+        return self.domain + '.' + self.codeDevice
 
     class Meta:
         verbose_name = 'устройство'
         verbose_name_plural = 'Устройства'
+        unique_together = [['domain', 'codeDevice']]
 
 
 class DeviceStates(models.Model):

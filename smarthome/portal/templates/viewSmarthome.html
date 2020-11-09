@@ -82,7 +82,7 @@
                                 <div class="col mb-4">
                                     <div class="card block">
                                         <div class="card-body text-center" style="cursor: pointer"
-                                             onclick="infoDevices('{{ sensor.entity_id }}')">
+                                             onclick="infoDevices('{{ sensor.getEntityId }}', '{{ pk }}')">
                                             <p class="card-text" style="font-size: 20px;">
                                                 {% if sensor.device_class == 'door' %}
                                                     <i class="material-icons">
@@ -94,6 +94,14 @@
                                                     </i>
                                                 {% elif sensor.device_class == 'motion' %}
                                                     <i class="material-icons"> directions_walk </i>
+                                                {% elif sensor.domain == 'binary_sensor' %}
+                                                    <i class="material-icons">
+                                                        {% if sensor.state == 'on' %}
+                                                            check_circle
+                                                        {% else %}
+                                                            panorama_fish_eye
+                                                        {% endif %}
+                                                    </i>
                                                 {% else %}
                                                     {{ sensor.state|default:'&nbsp' }}
                                                     {{ sensor.unit_of_measurement|default:'&nbsp' }}

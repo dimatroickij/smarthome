@@ -12,7 +12,7 @@
         </li>
         {% for device in devices %}
             <li class="list-group-item d-flex justify-content-between align-items-center block {{ domain }}"
-                entity_id="{{ device.entity_id }}">
+                entity_id="{{ device.getEntityId }}">
                 <span class="badge badge-pill">
                     {% if device.state == 'on' %}
                         <i class="material-icons flash" style="color: rgb(253, 216, 53);"> {{ flash }} </i>
@@ -20,12 +20,12 @@
                         <i class="material-icons flash"> {{ flash }} </i>
                     {% endif %}
                 </span>
-                <span style="font-size: 22px; cursor: pointer" onclick="infoDevice('{{ device.entity_id }}')">
+                <span style="font-size: 22px; cursor: pointer" onclick="infoDevice('{{ device.getEntityId }}', '{{ pk }}')">
                     {{ device.friendly_name }}
                 </span>
                 <span class="badge badge-pill">
                     <i class="material-icons toggle" style="cursor: pointer"
-                       onclick="selector('{{ device.entity_id }}', '{{ pk }}')">
+                       onclick="selector('{{ device.getEntityId }}', '{{ pk }}')">
                         {% if device.state == 'on' %}
                             toggle_on
                         {% else %}
