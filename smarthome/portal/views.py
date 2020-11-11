@@ -1,5 +1,4 @@
 import json
-
 import requests
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
@@ -7,7 +6,7 @@ from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 
-from portal.models import AccessSmarthome, Device, DeviceStates
+from portal.models import AccessSmarthome, Device, DeviceStates, Smarthome
 
 
 def home(request):
