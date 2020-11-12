@@ -47,9 +47,6 @@ celerybeat.pid
 venv/
 ENV/
 
-static/
-mediafiles/
-
 #db-files
 db.sqlite3
 
