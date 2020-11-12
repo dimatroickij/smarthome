@@ -39,16 +39,12 @@ services:
     hostname: dimatroickij
     env_file:
       - .env
-    ports:
-    - 15672:15672
-    - 5672:5672
+    expose:
+    - 15672
+    - 5672
 
   celery:
-    build:
-      context: ./smarthome
-      cache_from:
-        - "${CELERY_IMAGE}"
-    image: "${CELERY_IMAGE}"
+    image: "${WEB_IMAGE}"
     container_name: celery
     env_file:
       - .env
@@ -63,11 +59,7 @@ services:
       - rabbit
 
   celery_beat:
-    build:
-      context: ./smarthome
-      cache_from:
-        - "${CELERY_BEAT_IMAGE}"
-    image: "${CELERY_BEAT_IMAGE}"
+    image: "${WEB_IMAGE}"
     container_name: celery_beat
     env_file:
       - .env

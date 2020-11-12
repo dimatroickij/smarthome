@@ -32,12 +32,12 @@ services:
     hostname: dimatroickij
     env_file:
       - .env
-    ports:
-      - 15672:15672
-      - 5672:5672
+    expose:
+      - 15672
+      - 5672
 
   celery:
-    image: "${CELERY_IMAGE}"
+    image: "${WEB_IMAGE}"
     container_name: celery
     env_file:
       - .env
@@ -52,7 +52,7 @@ services:
       - rabbit
 
   celery_beat:
-    image: "${CELERY_BEAT_IMAGE}"
+    image: "${WEB_IMAGE}"
     container_name: celery_beat
     env_file:
       - .env
