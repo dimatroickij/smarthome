@@ -13,7 +13,7 @@ RUN apk update \
     && apk add postgresql-dev gcc python3-dev musl-dev
 
 # install dependencies
-RUN pip install --upgrade pip
+RUN /usr/local/bin/python -m pip install --upgrade pip
 COPY . .
 RUN pip install pip-tools
 RUN pip-compile --upgrade

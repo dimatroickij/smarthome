@@ -67,3 +67,7 @@ services:
     links:
       - rabbit
 
+volumes:
+  static_volume:
+  media_volume:
+
