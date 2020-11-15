@@ -2,6 +2,46 @@
 {% block title %}Умный дом{% endblock %}
 {% block content %}
     <script>
+        $(document).ready(function () {
+            $('#infoDeviceModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget) // Button that triggered the modal
+                var recipient = button.find('.nameDevice').text() // Extract info from data-* attributes
+                // If necessary, you could initiate an AJAX request here (and then do the updating in a callback).
+                // Update the modal's content. We'll use jQuery here, but you could use a data binding library or other methods instead.
+                var modal = $(this)
+                modal.find('#infoDeviceModalTitle').text(recipient)
+                //modal.find('textText').val(recipient)
+                var ctx = document.getElementById('graphStates');
+                var pk = $(button).attr('pk')
+                var entity_id = $(button).attr('entity_id')
+                $.ajax("{% url 'portal:getStatesDevice' %}", {
+                    data: {'pk': pk, 'entity_id': entity_id},
+                    statusCode: {
+                        200: function (data) {
+                            graphStates = new Chart(ctx, data);
+                        },
+                        204: function () {
+                            alert('Нет данных об устройстве')
+                        },
+                        400: function () {
+                            alert('Устройство не найдено')
+                        },
+                        403: function () {
+                            alert('Нет доступа к информации об устройстве')
+                        },
+                        404: function () {
+                            alert('Устройство не найдено')
+                        },
+                        503: function () {
+                            alert('Умный дом недоступен. Попробуйте ещё раз')
+                        }
+                    }
+                })
+            })
+            $('#infoDeviceModal').on('hide.bs.modal', function (event) {
+                graphStates.destroy()
+            })
+        })
         var table = {
             "toggle_on": ["toggle_off", "turn_off", "black"],
             "toggle_off": ["toggle_on", "turn_on", "rgb(253, 216, 53)"]
@@ -72,9 +112,9 @@
                         <div class="row row-cols-2 row-cols-sm-2 row-cols-md-3 row-cols-lg-5">
                             {% for sensor in sensors %}
                                 <div class="col mb-4">
-                                    <div class="card block">
-                                        <div class="card-body text-center" style="cursor: pointer"
-                                             onclick="infoDevices('{{ sensor.getEntityId }}', '{{ pk }}')">
+                                    <div class="card block" data-toggle="modal" data-target="#infoDeviceModal"
+                                         pk="{{ pk }}" entity_id="{{ sensor.getEntityId }}">
+                                        <div class="card-body text-center" style="cursor: pointer">
                                             <p class="card-text" style="font-size: 20px;">
                                                 {% if sensor.device_class == 'door' %}
                                                     <i class="material-icons">
@@ -99,7 +139,7 @@
                                                     {{ sensor.unit_of_measurement|default:'&nbsp' }}
                                                 {% endif %}
                                             </p>
-                                            <p class="card-text"><small class="text-muted">
+                                            <p class="card-text"><small class="text-muted nameDevice">
                                                 {{ sensor.name }}
                                             </small>
                                             </p>
@@ -113,6 +153,23 @@
             </div>
             {% include "block.html" with domain='light' name='Освещение' devices=lights flash='wb_incandescent' toogle_block=groups.light_state count_all=groups.light_len %}
             {% include "block.html" with domain='switch' name='Выключатели' devices=switches flash='flash_on' toogle_block=groups.switch_state count_all=groups.switch_len %}
+        </div>
+    </div>
+
+    <div class="modal fade" id="infoDeviceModal" data-backdrop="static" data-keyboard="false" tabindex="-1"
+         aria-labelledby="infoDeviceModalTitle" style="display: none;" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="infoDeviceModalTitle">{ friendly_name }</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <canvas id="graphStates"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}

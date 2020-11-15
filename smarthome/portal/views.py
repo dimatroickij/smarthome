@@ -2,7 +2,7 @@ import json
 import requests
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 
@@ -165,6 +165,42 @@ def selector(request):
             except:
                 return HttpResponse(status=503)
             return HttpResponse(response.status_code)
+        return HttpResponse(status=403)
+    return HttpResponse(status=404)
+
+
+@login_required
+def getStatesDevice(request):
+    def transformState(x):
+        if x.device.unit_of_measurement is not None:
+            return x.state
+        else:
+            if x.state == 'off':
+                return 0
+            else:
+                return 1
+    access = AccessSmarthome.objects.filter(pk=request.GET['pk'], isConfirmed=True)
+    if access.exists():
+        if access[0].user == request.user and access[0].access != 'guest':
+            devices = Device.objects.filter(domain=request.GET['entity_id'].split('.')[0],
+                                            smarthome=access[0].smarthome,
+                                            codeDevice=request.GET['entity_id'].split('.')[1])
+            if devices.exists():
+                states = DeviceStates.objects.filter(device=devices[0])
+                if states.exists():
+                    label = devices[0].unit_of_measurement
+                    response = {'type': 'line', 'data': {
+                        'labels': list(map(lambda x: x.last_changed.strftime('%d.%m %H:%M:%S'), states)),
+                        'datasets': [{
+                            'label': label if label is not None else '0 - выключено, 1 - включено',
+                            'data': list(map(transformState, states)),
+                            'borderWidth': 1,
+                            'steppedLine': True,
+                            'fill': False
+                        }]}, 'options': {'scales': {'yAxes': [{'ticks': {'beginAtZero': False}}]}}}
+                    return JsonResponse(response, safe=False)
+                return HttpResponse(status=204)
+            return HttpResponse(status=400)
         return HttpResponse(status=403)
     return HttpResponse(status=404)
 
