@@ -190,10 +190,13 @@ def getStatesDevice(request):
                 if states.exists():
                     label = devices[0].unit_of_measurement
                     response = {'type': 'line', 'data': {
-                        'labels': list(map(lambda x: x.last_changed.strftime('%d.%m %H:%M:%S'), states)),
+                        'labels': list(map(lambda x: x.last_changed.strftime('%d.%m %H:%M:%S'),
+                                           states.order_by('last_changed'))),
                         'datasets': [{
+                            #'backgroundColor': 'rgba(0, 0, 204, 0.9)',
+                            'borderColor': 'rgba(0, 0, 204, 0.6)',
                             'label': label if label is not None else '0 - выключено, 1 - включено',
-                            'data': list(map(transformState, states)),
+                            'data': list(map(transformState, states.order_by('last_changed'))),
                             'borderWidth': 1,
                             'steppedLine': True,
                             'fill': False
