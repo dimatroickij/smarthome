@@ -5,18 +5,31 @@
         $(document).ready(function () {
             $('#infoDeviceModal').on('show.bs.modal', function (event) {
                 var button = $(event.relatedTarget) // Button that triggered the modal
-                var nameDevice = button.find('.nameDevice').text() // Extract info from data-* attributes
+                var nameDevice = button.find('.nameDevice') // Extract info from data-* attributes
                 // If necessary, you could initiate an AJAX request here (and then do the updating in a callback).
                 // Update the modal's content. We'll use jQuery here, but you could use a data binding library or other methods instead.
                 var modal = $(this)
                 var infoDeviceModalTitle = modal.find('#infoDeviceModalTitle')
-                infoDeviceModalTitle.text(nameDevice)
+                infoDeviceModalTitle.text(nameDevice.text())
+
+                var editButton = $('<small>', {
+                    'class': 'text-muted', 'text': 'Изменить', 'style': 'cursor: pointer',
+                })
+                editButton.on('click', function () {
+                    var lastText = $('#infoDeviceModalTitle').text().trim().replace('Изменить', '')
+                    $('#infoDeviceModalTitle').html('<div class="input-group">' +
+                        '<input type="text" class="form-control" placeholder="' + lastText + '" ' +
+                        'onkeypress="saveNameDevice(this)"></div>')
+                })
+                $(infoDeviceModalTitle).append(editButton)
 
                 var edit = $('span', {'class': 'material-icons', 'text': 'edit'})
 
                 var ctx = document.getElementById('graphStates');
                 var pk = $(button).attr('pk')
                 var entity_id = $(button).attr('entity_id')
+                infoDeviceModalTitle.attr('pk', pk)
+                infoDeviceModalTitle.attr('entity_id', entity_id)
                 $.ajax("{% url 'portal:getStatesDevice' %}", {
                     data: {'pk': pk, 'entity_id': entity_id},
                     statusCode: {
@@ -49,6 +62,40 @@
                 }
             })
         })
+
+        function saveNameDevice(el) {
+            if (event.which === 13) {
+                $.ajax("{% url 'portal:editNameDevice' %}", {
+                    data: {
+                        'pk': $(el).parent().parent().attr('pk'),
+                        'entity_id': $(el).parent().parent().attr('entity_id'), 'name': $(el).val()
+                    },
+                    statusCode: {
+                        200: function () {
+                            location.reload()
+                        },
+                        400: function () {
+                            alert('Устройство не найдено')
+                            location.reload()
+                        },
+                        403: function () {
+                            alert('Нет доступа к изменению названий устройства')
+                            location.reload()
+                        },
+                        404: function () {
+                            alert('Не найден доступ к умному дому')
+                            location.reload()
+                        }
+                    }
+                })
+            }
+        }
+
+        function cancelEditNameDevice(lastName) {
+            $('#infoDeviceModalTitle').text()
+        }
+
+
         var table = {
             "toggle_on": ["toggle_off", "turn_off", "black"],
             "toggle_off": ["toggle_on", "turn_on", "rgb(253, 216, 53)"]
@@ -168,7 +215,8 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="infoDeviceModalTitle">{ friendly_name }
+                    <h5 class="modal-title" id="infoDeviceModalTitle">
+
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">×</span>

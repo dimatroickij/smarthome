@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
+from pytz import timezone
 
 from portal.models import AccessSmarthome, Device, DeviceStates, Smarthome
 
@@ -89,7 +90,7 @@ def viewSmarthome(request, pk):
             groups = {'switch': 0, 'light': 0}
             state = {'off': 0, 'on': 1}
             try:
-                responseDevice = requests.get(access[0].smarthome.url + '/api/states', headers=headers).json()
+                responseDevice = requests.get(access[0].smarthome.url + '/api/states', headers=headers, timeout=10).json()
                 devices = list(map(getListId, filter(lambda x: 'friendly_name' in list(x['attributes'].keys()),
                                                      responseDevice)))
                 for device in devices:
@@ -171,6 +172,8 @@ def selector(request):
 
 @login_required
 def getStatesDevice(request):
+    moscowTimezone = timezone('Europe/Moscow')
+
     def transformState(x):
         if x.device.unit_of_measurement is not None:
             return x.state
@@ -179,6 +182,7 @@ def getStatesDevice(request):
                 return 0
             else:
                 return 1
+
     access = AccessSmarthome.objects.filter(pk=request.GET['pk'], isConfirmed=True)
     if access.exists():
         if access[0].user == request.user and access[0].access != 'guest':
@@ -190,10 +194,11 @@ def getStatesDevice(request):
                 if states.exists():
                     label = devices[0].unit_of_measurement
                     response = {'type': 'line', 'data': {
-                        'labels': list(map(lambda x: x.last_changed.strftime('%d.%m %H:%M:%S'),
-                                           states.order_by('last_changed'))),
+                        'labels': list(
+                            map(lambda x: x.last_changed.astimezone(moscowTimezone).strftime('%d.%m %H:%M:%S'),
+                                states.order_by('last_changed'))),
                         'datasets': [{
-                            #'backgroundColor': 'rgba(0, 0, 204, 0.9)',
+                            # 'backgroundColor': 'rgba(0, 0, 204, 0.9)',
                             'borderColor': 'rgba(0, 0, 204, 0.6)',
                             'label': label if label is not None else '0 - выключено, 1 - включено',
                             'data': list(map(transformState, states.order_by('last_changed'))),
@@ -207,6 +212,23 @@ def getStatesDevice(request):
         return HttpResponse(status=403)
     return HttpResponse(status=404)
 
+
+def editNameDevice(request):
+    access = AccessSmarthome.objects.filter(pk=request.GET['pk'], isConfirmed=True)
+    if access.exists():
+        if access[0].user == request.user and access[0].access != 'guest':
+            print(access[0].smarthome.pk)
+            devices = Device.objects.filter(domain=request.GET['entity_id'].split('.')[0],
+                                            smarthome=access[0].smarthome,
+                                            codeDevice=request.GET['entity_id'].split('.')[1])
+            if devices.exists():
+                device = devices[0]
+                device.name = request.GET['name']
+                device.save()
+                return HttpResponse(status=200)
+            return HttpResponse(status=400)
+        return HttpResponse(status=403)
+    return HttpResponse(status=404)
 
 def error_404(request, exception):
     return render(request, 'error/error404.html', status=404)
