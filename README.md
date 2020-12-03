@@ -37,7 +37,7 @@
 
 ## РПЗ
 
-Расчётно пояснительная записка доступна по ссылке: [https://bmstu.codes/dimatroickij/smarthome/RPZ.pdf](https://bmstu.codes/dimatroickij/smarthome/RPZ.pdf).
+Расчётно пояснительная записка доступна по ссылке: [РПЗ](https://bmstu.codes/dimatroickij/smarthome/-/blob/master/RPZ.pdf).
 
 ## Адрес проекта
 
