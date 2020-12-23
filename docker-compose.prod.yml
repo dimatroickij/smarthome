@@ -1,8 +1,8 @@
 version: "3.3"
 services:
   web:
-    image: "${IMAGE}:web"
-    container_name: web
+    image: "${IMAGE}:smarthome"
+    container_name: smarthome
     command: sh -c "python manage.py makemigrations --noinput; python manage.py migrate; gunicorn smarthome.wsgi:application --bind 0.0.0.0:8000"
     volumes:
       - static_volume:/usr/src/app/static
@@ -13,7 +13,8 @@ services:
       - .env
 
   nginx:
-    image: "${IMAGE}:nginx"
+    image: "${IMAGE}:smarthome-nginx"
+    container_name: smarthome-nginx
     volumes:
       - static_volume:/usr/src/app/static
       - media_volume:/usr/src/app/mediafiles
@@ -28,7 +29,7 @@ services:
 
   rabbit:
     image: library/rabbitmq:3.8-alpine
-    container_name: rabbit
+    container_name: smarthome-rabbit
     hostname: dimatroickij
     env_file:
       - .env
@@ -37,8 +38,8 @@ services:
       - 5672
 
   celery:
-    image: "${IMAGE}:web"
-    container_name: celery
+    image: "${IMAGE}:smarthome"
+    container_name: smarthome-celery
     env_file:
       - .env
     command: celery worker -A smarthome
@@ -49,8 +50,8 @@ services:
       - rabbit
 
   celery_beat:
-    image: "${IMAGE}:web"
-    container_name: celery_beat
+    image: "${IMAGE}:smarthome"
+    container_name: smarthome-celery_beat
     env_file:
       - .env
     command: celery -A smarthome beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler

@@ -7,7 +7,7 @@ services:
       cache_from:
         - "${WEB_IMAGE}"
     image: "${WEB_IMAGE}"
-    container_name: web
+    container_name: smarthome
     command: sh -c "python manage.py collectstatic --no-input --clear"
     volumes:
       - static_volume:/usr/src/app/static
@@ -23,6 +23,7 @@ services:
       cache_from:
         - "${NGINX_IMAGE}"
     image: "${NGINX_IMAGE}"
+    container_name: smarthome-nginx
     volumes:
       - static_volume:/usr/src/app/static
       - media_volume:/usr/src/app/mediafiles
@@ -35,7 +36,7 @@ services:
 
   rabbit:
     image: library/rabbitmq:3.8-alpine
-    container_name: rabbit
+    container_name: smarthome-rabbit
     hostname: dimatroickij
     env_file:
       - .env
@@ -45,7 +46,7 @@ services:
 
   celery:
     image: "${WEB_IMAGE}"
-    container_name: celery
+    container_name: smarthome-celery
     env_file:
       - .env
     command: celery worker -A smarthome
@@ -57,7 +58,7 @@ services:
 
   celery_beat:
     image: "${WEB_IMAGE}"
-    container_name: celery_beat
+    container_name: smarthome-celery_beat
     env_file:
       - .env
     command: celery -A smarthome beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler

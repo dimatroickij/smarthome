@@ -3,8 +3,8 @@ version: "3.8"
 services:
   web:
     build: ./smarthome
-    image: &web web
-    container_name: web
+    image: &web smarthome
+    container_name: smarthome
     command: sh -c "python manage.py makemigrations; python manage.py migrate; python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./smarthome/:/usr/src/app/
@@ -26,7 +26,7 @@ services:
 
   rabbit:
     image: library/rabbitmq:3.8-management
-    container_name: rabbit
+    container_name: smarthome-rabbit
     hostname: dimatroickij
     env_file:
       - .env.dev
@@ -35,9 +35,8 @@ services:
       - 5672:5672
 
   celery:
-    #build: ./smarthome
     image: *web
-    container_name: celery
+    container_name: smarthome-celery
     env_file:
       - .env.dev
     command: celery worker -A smarthome
@@ -51,9 +50,8 @@ services:
       - db
 
   celery_beat:
-    #build: ./smarthome
     image: *web
-    container_name: celery_beat
+    container_name: smarthome-celery_beat
     env_file:
       - .env.dev
     command: celery -A smarthome beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler --pidfile=/tmp/celeryd.pid
