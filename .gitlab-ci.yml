@@ -16,7 +16,7 @@ variables:
 before_script:
   - export IMAGE=$CI_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME
   - export WEB_IMAGE=$IMAGE:smarthome
-  - export NGINX_IMAGE=$IMAGE:smarthome-nginx
+#  - export NGINX_IMAGE=$IMAGE:smarthome-nginx
   - apk add --no-cache openssh-client bash
   - chmod +x ./setup_env.sh
   - bash ./setup_env.sh
@@ -26,11 +26,11 @@ build:
   stage: build
   script:
     - docker pull $IMAGE:smarthome || true
-    - docker pull $IMAGE:smarthome-nginx || true
+#    - docker pull $IMAGE:smarthome-nginx || true
     - docker pull library/rabbitmq:3.8-management
     - docker-compose -f docker-compose.ci.yml build
     - docker push $IMAGE:smarthome
-    - docker push $IMAGE:smarthome-nginx
+#    - docker push $IMAGE:smarthome-nginx
 
 deploy:
   stage: deploy

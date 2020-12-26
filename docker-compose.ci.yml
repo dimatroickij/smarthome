@@ -16,22 +16,22 @@ services:
     env_file: 
       - .env
 
-  nginx:
-    build:
-      context: ./nginx
-      cache_from:
-        - "${NGINX_IMAGE}"
-    image: "${NGINX_IMAGE}"
-    container_name: smarthome-nginx
-    volumes:
-      - static_volume:/static
-      - media_volume:/usr/src/app/mediafiles
-      - /certs:/etc/nginx/certs
-    ports:
-      - 80:80
-      - 443:443
-    depends_on:
-      - web
+#  nginx:
+#    build:
+#      context: ./nginx
+#      cache_from:
+#        - "${NGINX_IMAGE}"
+#    image: "${NGINX_IMAGE}"
+#    container_name: smarthome-nginx
+#    volumes:
+#      - static_volume:/static
+#      - media_volume:/usr/src/app/mediafiles
+#      - /certs:/etc/nginx/certs
+#    ports:
+#      - 80:80
+#      - 443:443
+#    depends_on:
+#      - web
 
   rabbit:
     image: library/rabbitmq:3.8-alpine

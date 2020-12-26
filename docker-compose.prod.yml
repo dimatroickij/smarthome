@@ -12,20 +12,20 @@ services:
     env_file:
       - .env
 
-  nginx:
-    image: "${IMAGE}:smarthome-nginx"
-    container_name: smarthome-nginx
-    volumes:
-      - static_volume:/static
-      - media_volume:/usr/src/app/mediafiles
-      - /certs:/etc/nginx/certs
-    ports:
-      - 80:80
-      - 443:443
-    env_file:
-      - .env
-    depends_on:
-      - web
+#  nginx:
+#    image: "${IMAGE}:smarthome-nginx"
+#    container_name: smarthome-nginx
+#    volumes:
+#      - static_volume:/static
+#      - media_volume:/usr/src/app/mediafiles
+#      - /certs:/etc/nginx/certs
+#    ports:
+#      - 80:80
+#      - 443:443
+#    env_file:
+#      - .env
+#    depends_on:
+#      - web
 
   rabbit:
     image: library/rabbitmq:3.8-alpine
@@ -65,3 +65,7 @@ volumes:
   static_volume:
   media_volume:
 
+networks:
+  default:
+    external:
+      name: nginx-proxy
