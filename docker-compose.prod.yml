@@ -3,9 +3,9 @@ services:
   web:
     image: "${IMAGE}:smarthome"
     container_name: smarthome
-    command: sh -c "python manage.py makemigrations --noinput; python manage.py migrate; gunicorn smarthome.wsgi:application --bind 0.0.0.0:8000"
+    command: sh -c "python manage.py makemigrations --noinput; python manage.py migrate; python manage.py collectstatic --no-input --clear; gunicorn smarthome.wsgi:application --bind 0.0.0.0:8000"
     volumes:
-      - static_volume:/usr/src/app/static
+      - static_volume:/static
       - media_volume:/usr/src/app/mediafiles
     expose:
       - 8000
@@ -16,7 +16,7 @@ services:
     image: "${IMAGE}:smarthome-nginx"
     container_name: smarthome-nginx
     volumes:
-      - static_volume:/usr/src/app/static
+      - static_volume:/static
       - media_volume:/usr/src/app/mediafiles
       - /certs:/etc/nginx/certs
     ports:

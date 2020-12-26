@@ -8,9 +8,8 @@ services:
         - "${WEB_IMAGE}"
     image: "${WEB_IMAGE}"
     container_name: smarthome
-    command: sh -c "python manage.py collectstatic --no-input --clear"
     volumes:
-      - static_volume:/usr/src/app/static
+      - static_volume:/static
       - media_volume:/usr/src/app/mediafiles
     expose:
       - 8000
@@ -25,7 +24,7 @@ services:
     image: "${NGINX_IMAGE}"
     container_name: smarthome-nginx
     volumes:
-      - static_volume:/usr/src/app/static
+      - static_volume:/static
       - media_volume:/usr/src/app/mediafiles
       - /certs:/etc/nginx/certs
     ports:
